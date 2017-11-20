@@ -79,11 +79,11 @@ def get_user_tweets(user_name):
 
     
     
-    
+    d_list = []
     for tweet in results:
         
         ##prints the text and the time
-
+        d_list.append(tweet)
         key =  tweet["id"]
         ##print(key)
         ##adds to the dictionary
@@ -93,8 +93,8 @@ def get_user_tweets(user_name):
     fw = open(CACHE_FNAME,"w")
     fw.write(dumped_json_cache)
     fw.close() # Close the open file
-     
-    return CACHE_DICTION[key]
+    
+    return d_list
 
 get_user_tweets("@umsi")
 # Define your function get_user_tweets here:
@@ -106,8 +106,9 @@ get_user_tweets("@umsi")
 # Write an invocation to the function for the "umich" user timeline and 
 # save the result in a variable called umich_tweets:
 umich_tweets = get_user_tweets("@umsi")
+
 ##print(umich_tweets)
-##print(umich_tweets.type())
+##print(umich_tweets[18].type())
 
 ## Task 2 - Creating database and loading data into database
 ## You should load into the Users table:
@@ -118,13 +119,15 @@ umich_tweets = get_user_tweets("@umsi")
 # in the Users table, etc.
 list_users = []
 
+seen = set()
+
 for item in CACHE_DICTION:
 	if CACHE_DICTION[item]['entities']['user_mentions'] != []:
 		for dic in CACHE_DICTION[item]['entities']['user_mentions']:
-			
-		
-			list_users.append(api.get_user(dic['id']))
-##print(list_users)
+			if dic['id'] not in seen:
+
+				list_users.append(api.get_user(dic['id']))
+				seen.add(dic['id'])
 conn = sqlite3.connect('206_APIsAndDBs.sqlite')
 cur = conn.cursor()
 
@@ -133,19 +136,23 @@ cur.execute('CREATE TABLE Users (user_id TEXT,screen_name TEXT,num_favs INT,desc
 conn.commit()
 
 for user in list_users:
+	
+		
 	##print(user['entities']['favourites_count'])
-    cur.execute('INSERT INTO Users (user_id, screen_name, num_favs, description) VALUES (?,?,?,?)',(user["id"], user["screen_name"], user["favourites_count"], user["description"]))
-    conn.commit()
+	cur.execute('INSERT INTO Users (user_id, screen_name, num_favs, description) VALUES (?,?,?,?)',(user["id"], user["screen_name"], user["favourites_count"], user["description"]))
+	conn.commit()
 
 cur.execute('DROP TABLE IF EXISTS Tweets')
 cur.execute('CREATE TABLE Tweets (tweet_id TEXT,author TEXT,time_posted TEXT,tweet_text TEXT,retweets  INT)')
 conn.commit()
 um_tweets = []
 for key in CACHE_DICTION:
-    um_tweets.append(CACHE_DICTION[key])
+	if CACHE_DICTION[key] not in um_tweets:
+		um_tweets.append(CACHE_DICTION[key])
+
 for tweet in um_tweets:
-    cur.execute('INSERT INTO Tweets (tweet_id, author, time_posted, tweet_text, retweets) VALUES (?, ?,?,?,?)',(tweet["id"], tweet["user"]["screen_name"], tweet["created_at"], tweet["text"], tweet["retweet_count"]))
-    conn.commit()
+	cur.execute('INSERT INTO Tweets (tweet_id, author, time_posted, tweet_text, retweets) VALUES (?, ?,?,?,?)',(tweet["id"], tweet["user"]["screen_name"], tweet["created_at"], tweet["text"], tweet["retweet_count"]))
+	conn.commit()
 ## You should load into the Tweets table: 
 # Info about all the tweets (at least 20) that you gather from the 
 # umich timeline.
@@ -170,42 +177,77 @@ for tweet in um_tweets:
 
 # Make a query to select all of the records in the Users database. 
 # Save the list of tuples in a variable called users_info.
-
-users_info = True
+users_info = []
+sqlstr = 'SELECT user_id, screen_name, num_favs, description FROM Users'
+temp_tup = ()
+for row in cur.execute(sqlstr):
+	temp_tup = (str(row[0]), str(row[1]), str(row[2]), str(row[3]))
+	users_info.append(temp_tup)
+##print(users_info)
 
 # Make a query to select all of the user screen names from the database. 
 # Save a resulting list of strings (NOT tuples, the strings inside them!) 
 # in the variable screen_names. HINT: a list comprehension will make 
 # this easier to complete! 
-screen_names = True
+screen_names = []
+sqlstr = 'SELECT screen_name FROM Users'
+for row in cur.execute(sqlstr):
+	screen_names.append(str(row[0]))
+
+
+
+##print(screen_names)
 
 
 # Make a query to select all of the tweets (full rows of tweet information)
 # that have been retweeted more than 10 times. Save the result 
 # (a list of tuples, or an empty list) in a variable called retweets.
-retweets = True
-
+retweets = []
+sqlstr = 'SELECT author FROM Tweets WHERE retweets > 10'
+temp_tup = ()
+for row in cur.execute(sqlstr):
+	temp_tup = (str(row[0]), str(row[1]), str(row[2]), str(row[3]), str(row[4]))
+	retweets.append(temp_tup)
+##print(retweets)
 
 # Make a query to select all the descriptions (descriptions only) of 
 # the users who have favorited more than 500 tweets. Access all those 
 # strings, and save them in a variable called favorites, 
 # which should ultimately be a list of strings.
-favorites = True
-
+favorites = []
+sqlstr = 'SELECT description FROM Users WHERE num_favs > 10'
+for row in cur.execute(sqlstr):
+	favorites.append(str(row[0]))
+##print(favorites)
 
 # Make a query using an INNER JOIN to get a list of tuples with 2 
 # elements in each tuple: the user screenname and the text of the 
 # tweet. Save the resulting list of tuples in a variable called joined_data2.
-joined_data = True
+joined_data = []
+sqlstr = 'SELECT author, tweet_text FROM Tweets INNER JOIN Users ON Tweets.author = Users.screen_name'
+for row in cur.execute(sqlstr):
+	
+	temp_tup = (str(row[0]), str(row[1]))
+	joined_data.append(temp_tup)
+##print(joined_data)
+
+
 
 # Make a query using an INNER JOIN to get a list of tuples with 2 
 # elements in each tuple: the user screenname and the text of the 
 # tweet in descending order based on retweets. Save the resulting 
 # list of tuples in a variable called joined_data2.
 
-joined_data2 = True
+joined_data2 = []
+sqlstr = 'SELECT author, tweet_text, retweets FROM Tweets INNER JOIN Users ON Tweets.author = Users.screen_name ORDER BY Tweets.retweets DESC'
+for row in cur.execute(sqlstr):
+	
+	temp_tup = (str(row[0]), str(row[1]))
+	joined_data2.append(temp_tup)
+print(joined_data2)
 
-
+cur.close()
+conn.close()
 ### IMPORTANT: MAKE SURE TO CLOSE YOUR DATABASE CONNECTION AT THE END 
 ### OF THE FILE HERE SO YOU DO NOT LOCK YOUR DATABASE (it's fixable, 
 ### but it's a pain). ###
