@@ -9,7 +9,7 @@
 ## In this assignment you will be creating database and loading data 
 ## into database.  You will also be performing SQL queries on the data.
 ## You will be creating a database file: 206_APIsAndDBs.sqlite
-
+##comment
 import unittest
 import itertools
 import collections
@@ -194,7 +194,7 @@ for row in cur.execute(sqlstr):
 # strings, and save them in a variable called favorites, 
 # which should ultimately be a list of strings.
 favorites = []
-sqlstr = 'SELECT description FROM Users WHERE num_favs > 10'
+sqlstr = 'SELECT description FROM Users WHERE num_favs > 500'
 for row in cur.execute(sqlstr):
 	favorites.append(str(row[0]))
 
