@@ -21,7 +21,7 @@ import sqlite3
 ## Your name: Katarina Mazanka
 ## The names of anyone you worked with on this project:
 
-#####
+
 
 ##### TWEEPY SETUP CODE:
 # Authentication information should be in a twitter_info file...
