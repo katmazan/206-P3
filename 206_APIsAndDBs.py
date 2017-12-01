@@ -18,7 +18,7 @@ import twitter_info # same deal as always...
 import json
 import sqlite3
 
-## Your name: Katarina Mazanka
+## Your name: Katarina Mazanka mmm
 ## The names of anyone you worked with on this project:
 
 
